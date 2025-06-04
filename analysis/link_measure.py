@@ -39,3 +39,36 @@ def global_asymmetry(link_adjacency_matrix):
     return asymmetric_link / total_link
 
 
+# histograms and êtas
+
+def histogram(i, expect_proba_ajacency_matrix, trust_threshold, bin_number=50):
+    """Compute the histogram for the vertex with index `i` with `bin_number` bins"""
+    data = expect_proba_ajacency_matrix[i]
+    selector = data > trust_threshold
+    data = data[selector]
+    return np.histogram(data, bins=bin_number)
+
+def mean_histograms(expect_proba_ajacency_matrix, trust_threshold, phenotype_table, bin_number=50):
+    """Compute the average histogram for each phenotype and the global popupaltion"""
+    histograms = {"Global": np.zeros(bin_number)}
+    phenotype_numbers = {}
+    size = expect_proba_ajacency_matrix.shape[0]
+    for i in range(size):
+        ph = phenotype_table[i]
+        if not ph in histograms:
+            histograms[ph] = np.zeros(bin_number)
+            phenotype_numbers[ph] = 0
+        hist, _ = histogram(i, expect_proba_ajacency_matrix, trust_threshold, bin_number=bin_number)
+        histograms[ph] += hist
+        histograms["Global"] += hist
+        phenotype_numbers[ph] += 1
+    
+    for key in histograms.keys():
+        if key == "Global":
+            histograms[key] = histograms[key] / size
+        else:
+            histograms[key] = histograms[key] / phenotype_numbers[key]
+    
+    bins = np.linspace(trust_threshold, 1, bin_number+1)
+    
+    return histograms, bins
