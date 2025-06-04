@@ -1,4 +1,4 @@
-Number of interaction: 50000
+Number of interaction: 500000
 Output directory: "./out/last/"
 # Define the way we want to save the simulation:
 # Among "Last" (Only final state), "Freq" (TODO), "Off" (No save)
@@ -9,8 +9,8 @@ Seed: "distrib"
 
 # Model parameters
 Community size: 30
-Trust threshold: 0.72
-Memory size: 400
+Trust threshold: 0.85
+Memory size: 4000
 
 # Valid phenotypes (with caps): Trustful, Random, Optimistic, Pessimist, Envious
 Strategy distributions:

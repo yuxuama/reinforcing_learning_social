@@ -3,7 +3,7 @@ Implement the network structure
 Object RLNetwork and RLVertex defined"""
 import numpy as np
 import h5py
-from utils import parse_parameters, print_parameters
+from core_utils import parse_parameters, print_parameters
 from tqdm import tqdm
 
 GAME_TYPE_SIGNATURE = ["PD", "SH", "SD", "HG"]
@@ -142,8 +142,38 @@ class RLNetwork:
     def save(self):
         pass
 
-    def get_proba_adjacency_matrices(self, game_type_signature):
-        pass
+    def get_probability_matrix(self, game_type_signature):
+        """Return the adjacency matrix of the probability of agent to cooperate for the game
+        `game_type_signature` """
+        size = self.parameters["Community size"]
+        matrix = np.zeros((size, size), dtype=float)
+        for i in range(size):
+            for j in range(size):
+                if i != j:
+                    matrix[i, j] = self.vertices[i].get_probability(self.vertices[j], game_type_signature)
+        return matrix
+
+    def get_expect_probability_matrix(self, game_type_signature):
+        """Return the adjacency matrix of the expected probability of the other agent to 
+        cooperate for the game `game_type_signature` """
+        size = self.parameters["Community size"]
+        matrix = np.zeros((size, size), dtype=float)
+        for i in range(size):
+            for j in range(size):
+                if i != j:
+                    matrix[i, j] = self.vertices[i].get_expect_probability(self.vertices[j], game_type_signature)
+        return matrix
+
+    def get_global_expect_probability_matrix(self):
+        """Return the adjacency matrix of the expected probability of the other agent to 
+        cooperate in general"""
+        size = self.parameters["Community size"]
+        matrix = np.zeros((size, size), dtype=float)
+        for i in range(size):
+            for j in range(size):
+                if i != j:
+                    matrix[i, j] = self.vertices[i].get_global_expect_probability(self.vertices[j])
+        return matrix
 
     def get_link_adjacency_matrix(self):
         """Return the link adjacency matrix based on the value of "Trust threshold" and the 
@@ -238,7 +268,7 @@ class RLVertex:
         p = self.get_probability(other, game_type_signature)
         o_p = self.get_expect_probability(other, game_type_signature)
 
-        inspiration = np.array([p, 1-p]) @ game_matrix @ np.array([o_p, 1 - o_p])
+        inspiration = np.array([p, 1-p]) @ game_matrix @ np.array([o_p, 1-o_p])
         payoff = game_matrix[self_play, other_play]
         s = (payoff - inspiration) / np.max(game_matrix) 
 
@@ -306,3 +336,6 @@ class RLVertex:
 
     def __hash__(self):
         return self.index
+    
+    def __str__(self):
+        return str(self.index)
