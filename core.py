@@ -179,7 +179,7 @@ class RLNetwork:
         """Return the link adjacency matrix based on the value of "Trust threshold" and the 
         expected probabilities of each vertices"""
         size = self.parameters["Community size"]
-        link_adjacency_matrix = np.zeros((size, size))
+        link_adjacency_matrix = np.zeros((size, size), dtype=int)
         for i in range(size):
             for j in range(size):
                 if i != j:
