@@ -57,20 +57,30 @@ class Dataset:
             self.data[vertices[i].index] = i_data
         return self
 
-    def init_with_matrices(self, link_adjacency, parameters, niter):
+    def init_with_matrices(self, adjacency_dict, parameters, niter):
         """Initialize structure for local measurement only with matrices and parameters"""
         self.size = parameters["Community size"]
         self.niter = niter
+        link_adjacency = adjacency_dict["link"]
         kxgraph_link = from_numpy_array(link_adjacency)
         centralities = betweenness_centrality(kxgraph_link)
         out_degrees = np.sum(link_adjacency, axis=1)
         in_degrees = np.sum(link_adjacency, axis=0)
         asymmetries = individual_asymmetry(link_adjacency)
         phenotype_table = get_phenotype_table_from_parameters(parameters)
+        games = ["PD", "SH", "SD", "HG"]
         for i in range(self.size):
             i_data = {}
             # Phenotype
             i_data["Phenotype"] = phenotype_table[i]
+            # average probabilities per game
+            for g in games:
+                i_data["p" + g] = np.mean(adjacency_dict["p" + g][i])
+            # average expected probabilities per game
+            for g in games:
+                i_data["pe" + g] = np.mean(adjacency_dict["pe" + g][i])
+            # Expected probability
+            i_data["pe"] = np.mean(adjacency_dict["peTotal"][i])
             # Outdegree
             i_data["Out degree"] = out_degrees[i]
             # Indegree
