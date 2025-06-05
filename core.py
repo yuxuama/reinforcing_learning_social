@@ -3,6 +3,7 @@ Implement the network structure
 Object RLNetwork and RLVertex defined"""
 import numpy as np
 import h5py
+import os
 from core_utils import parse_parameters, print_parameters
 from tqdm import tqdm
 
@@ -25,6 +26,8 @@ class RLNetwork:
         """Initialize network with parameters contained in the yaml file `parameters_filename`"""
         # Get parameters
         self.parameters = parse_parameters(parameters_filename)
+        if not self.parameters["Output directory"].endswith("/"):
+            raise KeyError("The 'Output directory' parameter must end with a '/' as it is a directory")
         if "Verbose" in self.parameters:
             self.verbose = self.parameters["Verbose"]
         # Create vertices
@@ -53,7 +56,7 @@ class RLNetwork:
             v = RLVertex(i, possible_phenotypes[distrib_pointer-1], self.parameters["Memory size"])
             self.vertices.append(v)
 
-    def generate_name(self):
+    def generate_name(self, preseed_prefix=""):
         """Generate a name that represent the simulation. This name will be used for saving
         the simulation. The parameters `Seed` can avoid duplicate name.
         name format: '<Distribution>_S<Community size>_T<Trust threshold>_M<Memory size>_N<Number of interaction>(_<seed>)
@@ -77,6 +80,8 @@ class RLNetwork:
         name += "M" + str(self.parameters["Memory size"]) + "_"
         name += "N" + str(self.parameters["Number of interaction"])
 
+        if preseed_prefix != "":
+            name += "_" + preseed_prefix
         if not self.seed is None:
             name += "_" + str(self.seed)
         
@@ -88,8 +93,8 @@ class RLNetwork:
         | R | S |
         | T | P |
         where R = 10, P = 5
-        and S \in [0, 10]
-        and T \in [5, 15]
+        and S in [0, 10]
+        and T in [5, 15]
 
         Different conditions for each type of games
         PD: T > R > P > S
@@ -138,9 +143,45 @@ class RLNetwork:
         
         for _ in tqdm(range(self.parameters["Number of interaction"])):
             self.simulate_interaction()
+        
+        if self.parameters["Save mode"] == "Off":
+            return
+        elif self.parameters["Save mode"] == "Last":
+            self.save()
+        else:
+            raise KeyError("Unknown save mode: must be in 'Last' or 'Off")
 
-    def save(self):
-        pass
+    def save(self, verbose_context=True):
+        """Saving the current important piece of information of the network in a HDF5 file"""
+        try:
+            os.makedirs(self.parameters["Output directory"])
+        except OSError:
+            if verbose_context:
+                print("/!\ Warning: the directory you want to save in already exists. You may overwrite file")
+                proceed = input("Proceed [y]/n ?")
+                if proceed == "n":
+                    return
+        
+        filepath = self.parameters["Output directory"] + self.name + ".h5"
+        if verbose_context:
+            print("Saving in: ", filepath)
+        hdf5_file = h5py.File(filepath, "w")
+
+        # Saving all adjacency matrices
+        for g in GAME_TYPE_SIGNATURE:
+            hdf5_file["p" + g] = self.get_probability_matrix(g)
+            hdf5_file["pe" + g] = self.get_expect_probability_matrix(g)
+        hdf5_file["peTotal"] = self.get_global_expect_probability_matrix()
+        hdf5_file["link"] = self.get_link_adjacency_matrix()
+
+        # Saving parameters
+        pgroup = hdf5_file.create_group("Parameters", track_order=True)
+        for key, value in self.parameters.items():
+            if key != "Strategy distributions":
+                pgroup[key] = value
+        dgroup = pgroup.create_group("Strategy distributions")
+        for ph, proba in self.parameters["Strategy distributions"].items():
+            dgroup[ph] = proba      
 
     def get_probability_matrix(self, game_type_signature):
         """Return the adjacency matrix of the probability of agent to cooperate for the game
@@ -233,6 +274,19 @@ INITIAL_PROBABILITIES = {
     }
 }
 
+def get_posterior_expected_probability(Nc, Ntot):
+    """Return the probability of the other to cooperate knowing the number of time it cooperated
+    in the past and the total number of interaction
+    For now we used Bayesian inference assuming a prior P(p_expect = x) = x * (1 - x).
+    This is roughly equivalent to considering that C and D are equiprobable and doing an entropy analysis.
+    In this analysis we can get the distribution of P(p_expect) with respect to a certain number of "memory"
+    tries `N_mem`. We are essentially asking how probable it is to have P(p_expect=x) based on previously 
+    experienced situation of N_mem successive draws (C or D with 50-50 chance).
+    A prior x * (1 - x) is roughly equivalent to N_mem = 3.
+    N_mem represent how strongly one believe the other will behave randomly
+    
+    """
+    return (Nc + 1) / (Ntot + 2)
 
 class RLVertex:
 
@@ -300,16 +354,34 @@ class RLVertex:
         else:
             return INITIAL_PROBABILITIES[self.phenotype][game_type_signature]["self"]
     
+    def get_average_probability(self, game_type_signature):
+        """Return the average probability of the agent to cooperate for the game indicated 
+        by `game_type_signature`. The average is computed only for people with who it has 
+        interacted in the past."""
+        probas = []
+        for other in self.probabilities:
+            probas.append(self.get_probability(other, game_type_signature))
+        return np.mean(probas)
+    
     def get_expect_probability(self, other, game_type_signature):
         """Return, from the perspective of the agent, the probability for the agent `other`
         to cooperate for the type of game identified by `game_type_signature`"""
         if other in self.probabilities:
             Nc = self.probabilities[other][game_type_signature]["other C"]
             Ntot = self.probabilities[other][game_type_signature]["other total"]
-            return (Nc + 1) / (Ntot + 2) # We consider that beforehand the agent expect random which is emulated by fantom memory
+            return get_posterior_expected_probability(Nc, Ntot)
 
         return 0.5
     
+    def get_average_expect_probability(self, game_type_signature):
+        """Return the average probability of the agent to cooperate for the game indicated 
+        by `game_type_signature`. The average is computed only for people with who it has 
+        interacted in the past."""
+        probas = []
+        for other in self.probabilities:
+            probas.append(self.get_expect_probability(other, game_type_signature))
+        return np.mean(probas)
+
     def get_global_expect_probability(self, other):
         """Return, from the perspective of the agent, the probability for the agent `other`
         to cooperate in general"""
@@ -317,11 +389,26 @@ class RLVertex:
             Nc = 0
             Ntot = 0
             for game_type in GAME_TYPE_SIGNATURE:
-                Nc = self.probabilities[other][game_type]["other C"]
-                Ntot = self.probabilities[other][game_type]["other total"]
-            return (Nc + 1) / (Ntot + 2)
+                Nc += self.probabilities[other][game_type]["other C"]
+                Ntot += self.probabilities[other][game_type]["other total"]
+            return get_posterior_expected_probability(Nc, Ntot)
         
         return 0.5
+    
+    def get_average_global_expect_probability(self):
+        probas = []
+        for other in self.probabilities:
+            probas.append(self.get_global_expect_probability(other))
+        return np.mean(probas)
+    
+    def get_average_correlation(self, game_type_signature):
+        """Return the correlation between the probability of cooperating and the expected probability of
+        another cooperating"""
+        correlation = []
+        for other in self.probabilities:
+            corr = self.get_probability(other, game_type_signature) * self.get_expect_probability(other, game_type_signature)
+            correlation.append(corr)
+        return np.mean(corr)
     
     def set_probability(self, other, game_type_signature, value):
         """Set the probability of cooperating in the game identified by `game_type_signature` to `value`"""

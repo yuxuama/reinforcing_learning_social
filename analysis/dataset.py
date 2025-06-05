@@ -25,6 +25,7 @@ class Dataset:
         out_degrees = np.sum(link_adjacency, axis=1)
         in_degrees = np.sum(link_adjacency, axis=0)
         asymmetries = individual_asymmetry(link_adjacency)
+        games = ["PD", "SH", "SD", "HG"]
         for i in range(self.size):
             i_data = {}
             # Graph index
@@ -33,6 +34,17 @@ class Dataset:
             i_data["Phenotype"] = vertices[i].phenotype
             # Memory saturation
             i_data["Saturation"] = len(vertices[i].memory) / vertices[i].memory_size
+            # average probabilities per game
+            for g in games:
+                i_data["p" + g] = vertices[i].get_average_probability(g)
+            # average expected probabilities per game
+            for g in games:
+                i_data["pe" + g] = vertices[i].get_average_expect_probability(g)
+            # Expected probability
+            i_data["pe"] = vertices[i].get_average_global_expect_probability()
+            # Correlation
+            for g in games:
+                i_data["Correlation" + g] = vertices[i].get_average_correlation(g)
             # Outdegree
             i_data["Out degree"] = out_degrees[index]
             # Indegree

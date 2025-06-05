@@ -65,7 +65,7 @@ def plot_bar_diadic_pattern(dataset, **plot_kwargs):
     possible_phenotype = list(dataset.get_item(".").keys())
     dta = dataset.aggregate(possible_phenotype)
     bottom = np.zeros(4)
-    ax = plt.subplot(1, 1, 1)
+    _, ax = plt.subplots(1, 1)
     for i in range(len(possible_phenotype)-1):
         ph = possible_phenotype[i]
         data = dta.get_item(ph).get_all_item()
@@ -77,7 +77,7 @@ def plot_bar_diadic_pattern(dataset, **plot_kwargs):
 
 def plot_bar_diadic_pattern_from_hist(freq_dict_hist, diadic_list, **plot_kwargs):
     bottom = np.zeros(4)
-    ax = plt.subplot(1, 1, 1)
+    _, ax = plt.subplots(1, 1)
     for ph in freq_dict_hist.keys():
         if ph != "Number":
             data = freq_dict_hist[ph] / 2
@@ -100,7 +100,7 @@ def plot_phenotype_combination_per_link(link_type, combination_dt, th=0):
             plot_combination.append(data_order[i][0])
             plot_data.append(data_order[i][1])
     
-    fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+    _, ax = plt.subplots(1, 1, figsize=(8, 5))
     ax.bar(range(len(plot_data)), plot_data)
     ax.set_xticks(range(len(plot_data)))
     ax.set_xticklabels(plot_combination)
