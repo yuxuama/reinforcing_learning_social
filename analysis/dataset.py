@@ -41,7 +41,7 @@ class Dataset:
             for g in games:
                 i_data["pe" + g] = vertices[i].get_average_expect_probability(g)
             # Expected probability
-            i_data["pe"] = vertices[i].get_average_global_expect_probability()
+            i_data["peTotal"] = vertices[i].get_average_global_expect_probability()
             # Correlation
             for g in games:
                 i_data["Correlation" + g] = vertices[i].get_average_correlation(g)
@@ -80,7 +80,7 @@ class Dataset:
             for g in games:
                 i_data["pe" + g] = np.mean(adjacency_dict["pe" + g][i])
             # Expected probability
-            i_data["pe"] = np.mean(adjacency_dict["peTotal"][i])
+            i_data["peTotal"] = np.mean(adjacency_dict["peTotal"][i])
             # Outdegree
             i_data["Out degree"] = out_degrees[i]
             # Indegree

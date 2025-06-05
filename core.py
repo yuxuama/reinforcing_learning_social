@@ -181,7 +181,9 @@ class RLNetwork:
                 pgroup[key] = value
         dgroup = pgroup.create_group("Strategy distributions")
         for ph, proba in self.parameters["Strategy distributions"].items():
-            dgroup[ph] = proba      
+            dgroup[ph] = proba
+
+        hdf5_file.close()      
 
     def get_probability_matrix(self, game_type_signature):
         """Return the adjacency matrix of the probability of agent to cooperate for the game
@@ -229,6 +231,18 @@ class RLNetwork:
                         link_adjacency_matrix[i, j] = 1
         
         return link_adjacency_matrix
+    
+    def get_edge_list(self):
+        """Generate the edge list of the network having the layer of expected probability and link matrix
+        This is for the conversion to `graph-tool` module graph structure"""
+        global_expect_probability_matrix = self.get_global_expect_probability_matrix()
+        link_matrix = self.get_link_adjacency_matrix()
+        edge_list = []
+        size = global_expect_probability_matrix.shape[0]
+        for i in range(size):
+            for j in range(size):
+                edge_list.append((i, j, global_expect_probability_matrix[i, j], link_matrix[i, j]))
+        return edge_list
 
     def get_phenotype_table(self):
         """Return the correspondance table index - phenotype"""

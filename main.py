@@ -23,24 +23,24 @@ if __name__ == "__main__":
     print("Number of interaction per link: ", net.parameters["Number of interaction"] * 2 / (n * (n-1)))
     #print(net.vertices[22].probabilities)
 
-    mean_hist, bins = mean_histograms(net.get_global_expect_probability_matrix(), net.parameters["Trust threshold"], net.get_phenotype_table(), bin_number=10)
-    plot_histogram_per_phenotype(mean_hist, bins)
-    plt.savefig(r"./figure/trust.png")
+    #mean_hist, bins = mean_histograms(net.get_global_expect_probability_matrix(), net.parameters["Trust threshold"], net.get_phenotype_table(), bin_number=10)
+    #plot_histogram_per_phenotype(mean_hist, bins)
+    #plt.savefig(r"./figure/trust.png")
 
-    local_dt = Dataset('local', net.parameters["Number of interaction"])
-    local_dt.init_with_network(net)
-    plot_hist_by_phenotype(local_dt, "Asymmetry")
-    plt.savefig(r"./figure/asymmetry.png")
+    #local_dt = Dataset('local', net.parameters["Number of interaction"])
+    #local_dt.init_with_network(net)
+    #plot_hist_by_phenotype(local_dt, "Asymmetry")
+    #plt.savefig(r"./figure/asymmetry.png")
 
-    to_plot = ["pPD", "pSH", "pSD", "pHG", "pePD", "peSH", "peSD", "peHG", "CorrelationPD", "CorrelationSH", "CorrelationSD", "CorrelationHG"]
-    for quantity in to_plot:
-        plot_hist_by_phenotype(local_dt, quantity)
-        plt.savefig(r"./figure/{}.png".format(quantity))
-    
-    diadic_dt = measure_frequency_diadic_pattern(net.get_link_adjacency_matrix(), net.parameters, net.parameters["Number of interaction"])
-    plot_bar_diadic_pattern(diadic_dt)
-    plt.savefig(r"./figure/diadic.png")
+    #to_plot = ["pPD", "pSH", "pSD", "pHG", "pePD", "peSH", "peSD", "peHG", "CorrelationPD", "CorrelationSH", "CorrelationSD", "CorrelationHG"]
+    #for quantity in to_plot:
+    #    plot_hist_by_phenotype(local_dt, quantity)
+    #    plt.savefig(r"./figure/{}.png".format(quantity))
+    #
+    #diadic_dt = measure_frequency_diadic_pattern(net.get_link_adjacency_matrix(), net.parameters, net.parameters["Number of interaction"])
+    #plot_bar_diadic_pattern(diadic_dt)
+    #plt.savefig(r"./figure/diadic.png")
 
-    triadic_dt = measure_global_frequency_triadic_pattern(net.get_link_adjacency_matrix(), net.parameters, net.parameters["Number of interaction"])
-    plot_triadic_pattern_phenotype(triadic_dt, net.parameters)
-    plt.savefig(r"./figure/triadic.png")
+    #triadic_dt = measure_global_frequency_triadic_pattern(net.get_link_adjacency_matrix(), net.parameters, net.parameters["Number of interaction"])
+    #plot_triadic_pattern_phenotype(triadic_dt, net.parameters)
+    #plt.savefig(r"./figure/triadic.png")

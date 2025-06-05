@@ -66,5 +66,16 @@ def extract_all_info_from_hdf5(filepath):
     for groups in adjacency_matrices.keys():
         adjacency_matrices[groups] = hdf5_file[groups][:]
     
+    hdf5_file.close()
+
     return adjacency_matrices, parameters
+
+def generate_edge_list_from_matrices(global_expect_probability_matrix, link_matrix):
+    """Generate the edge list of the network having the layer of expected probability and link matrix"""
+    edge_list = []
+    size = global_expect_probability_matrix.shape[0]
+    for i in range(size):
+        for j in range(size):
+            edge_list.append((i, j, global_expect_probability_matrix[i, j], link_matrix[i, j]))
+    return edge_list
 
