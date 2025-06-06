@@ -302,7 +302,7 @@ INITIAL_PROBABILITIES = {
     }
 }
 
-def get_posterior_expected_probability(Nc, Ntot):
+def get_posterior_expected_probability(Nc, Ntot, phenotype):
     """Return the probability of the other to cooperate knowing the number of time it cooperated
     in the past and the total number of interaction
     For now we used Bayesian inference assuming a prior P(p_expect = x) = x * (1 - x).
@@ -313,6 +313,11 @@ def get_posterior_expected_probability(Nc, Ntot):
     A prior x * (1 - x) is roughly equivalent to N_mem = 3.
     N_mem represent how strongly one believe the other will behave randomly
     """
+    if phenotype == "Trustful" or phenotype == "Optimist":
+        return (Nc + 1) / (Ntot + 1)
+    elif phenotype == "Pessimist":
+        return Nc / (Ntot + 1)
+    
     return (Nc + 1) / (Ntot + 2)
 
 class RLVertex:
@@ -396,7 +401,7 @@ class RLVertex:
         if other in self.probabilities:
             Nc = self.probabilities[other][game_type_signature]["other C"]
             Ntot = self.probabilities[other][game_type_signature]["other total"]
-            return get_posterior_expected_probability(Nc, Ntot)
+            return get_posterior_expected_probability(Nc, Ntot, self.phenotype)
 
         return 0.5
     
@@ -418,7 +423,7 @@ class RLVertex:
             for game_type in GAME_TYPE_SIGNATURE:
                 Nc += self.probabilities[other][game_type]["other C"]
                 Ntot += self.probabilities[other][game_type]["other total"]
-            return get_posterior_expected_probability(Nc, Ntot)
+            return get_posterior_expected_probability(Nc, Ntot, self.phenotype)
         
         return 0.5
     
