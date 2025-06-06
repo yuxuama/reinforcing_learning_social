@@ -171,6 +171,7 @@ class RLNetwork:
         for g in GAME_TYPE_SIGNATURE:
             hdf5_file["p" + g] = self.get_probability_matrix(g)
             hdf5_file["pe" + g] = self.get_expect_probability_matrix(g)
+            hdf5_file["Correlation" + g] = self.get_correlation_adjacency_matrix(g)
         hdf5_file["peTotal"] = self.get_global_expect_probability_matrix()
         hdf5_file["link"] = self.get_link_adjacency_matrix()
 
@@ -217,6 +218,15 @@ class RLNetwork:
                 if i != j:
                     matrix[i, j] = self.vertices[i].get_global_expect_probability(self.vertices[j])
         return matrix
+    
+    def get_correlation_adjacency_matrix(self, game_type_signature):
+        """Return the adjacency matrix of the correlation between probability and exepected probability"""
+        size = self.parameters["Community size"]
+        corr_adjacency = np.zeros((size, size))
+        for i in range(size):
+            for j in range(size):
+                corr_adjacency[i, j] = self.vertices[i].get_correlation(self.vertices[j], game_type_signature)
+        return corr_adjacency
 
     def get_link_adjacency_matrix(self):
         """Return the link adjacency matrix based on the value of "Trust threshold" and the 
@@ -298,7 +308,6 @@ def get_posterior_expected_probability(Nc, Ntot):
     experienced situation of N_mem successive draws (C or D with 50-50 chance).
     A prior x * (1 - x) is roughly equivalent to N_mem = 3.
     N_mem represent how strongly one believe the other will behave randomly
-    
     """
     return (Nc + 1) / (Ntot + 2)
 
@@ -415,12 +424,17 @@ class RLVertex:
             probas.append(self.get_global_expect_probability(other))
         return np.mean(probas)
     
+    def get_correlation(self, other, game_type_signature):
+        """Return the correlation value between the probability of cooperating and the probability with which
+        the agent expect the other to cooperate"""
+        return self.get_probability(other, game_type_signature) * self.get_expect_probability(other, game_type_signature)
+
     def get_average_correlation(self, game_type_signature):
         """Return the correlation between the probability of cooperating and the expected probability of
         another cooperating"""
         correlation = []
         for other in self.probabilities:
-            corr = self.get_probability(other, game_type_signature) * self.get_expect_probability(other, game_type_signature)
+            corr = self.get_correlation(other, game_type_signature)
             correlation.append(corr)
         return np.mean(corr)
     

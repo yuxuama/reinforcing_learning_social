@@ -50,21 +50,11 @@ def extract_parameters_from_hdf5(filepath):
 def extract_all_info_from_hdf5(filepath):
     """Extract all adjacency matrices and parameters from the hdf5 file"""
     parameters = extract_parameters_from_hdf5(filepath)
-    adjacency_matrices = {
-        "pPD": None,
-        "pSH": None,
-        "pSD": None,
-        "pHG": None,
-        "pePD": None,
-        "peSH": None,
-        "peSD": None,
-        "peHG": None,
-        "peTotal": None,
-        "link": None,
-    }
+    adjacency_matrices = {}
     hdf5_file = h5py.File(filepath)
-    for groups in adjacency_matrices.keys():
-        adjacency_matrices[groups] = hdf5_file[groups][:]
+    for groups in hdf5_file.keys():
+        if groups != "Parameters":
+            adjacency_matrices[groups] = hdf5_file[groups][:]
     
     hdf5_file.close()
 

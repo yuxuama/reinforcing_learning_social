@@ -88,6 +88,9 @@ class Dataset:
                 i_data["pe" + g] = np.mean(adjacency_dict["pe" + g][i])
             # Expected probability
             i_data["peTotal"] = np.mean(adjacency_dict["peTotal"][i])
+            # Average correlation
+            for g in games:
+                i_data["Correlation" + g] = np.mean(adjacency_dict["Correlation" + g][i])
             # Outdegree
             i_data["Out degree"] = out_degrees[i]
             # Indegree
