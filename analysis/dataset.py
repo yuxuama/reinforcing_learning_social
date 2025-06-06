@@ -4,7 +4,7 @@ Implement the dataset structure"""
 from analysis.analysis_init import *
 from networkx import from_numpy_array, betweenness_centrality
 from analysis.analysis_utils import get_phenotype_table_from_parameters
-from analysis.link_measure import individual_asymmetry
+from analysis.link_measure import individual_asymmetry, compute_xhi_from_matrix, compute_eta_from_xhi
 
 class Dataset:
 
@@ -25,6 +25,7 @@ class Dataset:
         out_degrees = np.sum(link_adjacency, axis=1)
         in_degrees = np.sum(link_adjacency, axis=0)
         asymmetries = individual_asymmetry(link_adjacency)
+        expect_proba_ajacency_matrix = net.get_global_expect_probability_matrix()
         games = ["PD", "SH", "SD", "HG"]
         for i in range(self.size):
             i_data = {}
@@ -49,6 +50,12 @@ class Dataset:
             i_data["Out degree"] = out_degrees[index]
             # Indegree
             i_data["In degree"] = in_degrees[index]
+            # Eta
+            xhi = compute_xhi_from_matrix(vertices[i].index, expect_proba_ajacency_matrix, net.parameters["Trust threshold"])
+            if np.sum(xhi) > 0:
+                i_data["Eta"] = compute_eta_from_xhi(xhi)
+            else:
+                i_data["Eta"] = np.nan
             # Centrality
             i_data["Centrality"] = centralities[index]
             # Asymmetry
@@ -85,6 +92,12 @@ class Dataset:
             i_data["Out degree"] = out_degrees[i]
             # Indegree
             i_data["In degree"] = in_degrees[i]
+            # Eta
+            xhi = compute_xhi_from_matrix(i, adjacency_dict["peTotal"], parameters["Trust threshold"])
+            if np.sum(xhi) > 0:
+                i_data["Eta"] = compute_eta_from_xhi(xhi)
+            else:
+                i_data["Eta"] = np.nan
             # Centrality
             i_data["Centrality"] = centralities[i]
             # Asymmetry

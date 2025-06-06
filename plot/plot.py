@@ -2,6 +2,7 @@
 Implement all the plot functions not evolving datasets"""
 
 from plot.plot_init import *
+from scipy.optimize import curve_fit
 
 def plot_histogram(data, bins, ax=None, **plot_kwargs):
     """Plot the histogram with `data` corresponding to the content of the `bins` on the axis `ax`.
@@ -39,4 +40,31 @@ def plot_histogram_per_phenotype(mean_histogram, bins, **hist_kwargs):
                 xlabel="Expected probability"
             )
     fig.suptitle("Average histogram of 'trust' per phenotype")
-            
+    return ax
+
+def plot_xhi_by_phenotype(xhi_means, **plot_kwargs):
+    """Plot all mean xhis for each phenotype and the corresponding eta fit"""
+    possible_phenotype = list(xhi_means.keys())
+    possible_phenotype.append(possible_phenotype.pop(0))
+    fig_layout = [(1, 2), (1, 3), (2, 3), (2, 3), (2, 3)]
+    layout = fig_layout[len(possible_phenotype) - 2]
+    fig, ax = plt.subplots(layout[0], layout[1], figsize=(8, 6))
+    model = lambda j, eta: (np.exp(eta * j) - 1) / (np.exp(eta) - 1)
+    for i in range(layout[0]):
+        for j in range(layout[1]):
+            if layout[0] == 1:
+                selector = j
+            else:
+                selector = (i, j)
+            index = i * layout[1] + j
+            ph = possible_phenotype[index]
+            xhi = xhi_means[ph]
+            t_norm = np.linspace(0, 1, xhi.size)
+            popt, _ = curve_fit(model, t_norm, xhi)
+
+            ax[selector].plot(t_norm, xhi, "+", color="tab:blue", label="Mean", **plot_kwargs)
+            ax[selector].plot(t_norm, model(t_norm, popt[0]), color="tab:orange", label="Fit ($\eta$ = {})".format(round(popt[0], 2)))
+            ax[selector].set_title(ph)
+            ax[selector].legend()
+    fig.suptitle("Average xhi by phenotype")
+    return ax

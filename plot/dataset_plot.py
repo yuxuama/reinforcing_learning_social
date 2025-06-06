@@ -28,7 +28,11 @@ def plot_hist_by_phenotype(dataset, quantity, **plot_kwargs):
             data = list(data.values())
             n, _, _ = ax[selector].hist(data, **plot_kwargs)
             maxi = np.max(n)
-            median = np.median(data)
+            median = []
+            for d in data:
+                if not np.isnan(d):
+                    median.append(d)
+            median = np.median(median)
             ax[selector].vlines(median, 0, maxi*1.1, colors="k", linestyles="dashed", label="Median: {}".format(round(median, 2)))
             ax[selector].set_title(title)
             ax[selector].set_ylim([0, maxi*1.1])
