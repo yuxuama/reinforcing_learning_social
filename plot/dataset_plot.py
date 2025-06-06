@@ -117,7 +117,7 @@ def plot_triadic_pattern(triadic_dataset, selector="Number", triangle_only=False
     triangle_names = list(data.keys())
 
     def get_image(name):
-        path = r"C:\Users\Matthieu\Documents\_Travail\Stages\Stage M1\Workspace\image\triadic_{}.png".format(name)
+        path = r"../icon/triadic_{}.png".format(name)
         im = plt.imread(path)
         return im
 
@@ -159,7 +159,7 @@ def plot_triadic_pattern_phenotype(triadic_dataset, parameters, triangle_only=Fa
     triangle_names = list(data.get_item("Number").get_all_item().keys())
 
     def get_image(name):
-        path = r"C:\Users\Matthieu\Documents\_Travail\Stages\Stage M1\Workspace\image\triadic_{}.png".format(name)
+        path = r"../icon/triadic_{}.png".format(name)
         im = plt.imread(path)
         return im
 
@@ -199,7 +199,7 @@ def plot_triadic_pattern_phenotype(triadic_dataset, parameters, triangle_only=Fa
 def plot_triadic_pattern_phenotype_from_hist(freq_dict_hist, triangle_list, err=None, triangle_only=False, **plot_kwargs):
 
     def get_image(name):
-        path = r"C:\Users\Matthieu\Documents\_Travail\Stages\Stage M1\Workspace\image\triadic_{}.png".format(name)
+        path = r"../icon/triadic_{}.png".format(name)
         im = plt.imread(path)
         return im
 
@@ -257,7 +257,7 @@ def plot_phenotype_combination_per_triangle(triangle_id, combination_dt, th=0):
     ax.set_title("Phenotype combinations distribution for triangle {0} with threshold {1}".format(triangle_id, th))
     ax.set_ylabel("Occurence")
 
-    filepath =  r"C:\Users\Matthieu\Documents\_Travail\Stages\Stage M1\Workspace\image\triadic_numbered_{}.png".format(triangle_id)
+    filepath =  r"../icon/triadic_numbered_{}.png".format(triangle_id)
     img = plt.imread(filepath)
     im = OffsetImage(img, zoom=0.6)
     im.image.axes = ax
