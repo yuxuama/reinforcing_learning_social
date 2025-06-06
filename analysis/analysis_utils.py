@@ -3,6 +3,7 @@ All utils for analysis"""
 
 from analysis.analysis_init import *
 import h5py
+import os
 
 GAME_TYPE_SIGNATURE = ["PD", "SH", "SD", "HG"]
 
@@ -59,6 +60,28 @@ def extract_all_info_from_hdf5(filepath):
     hdf5_file.close()
 
     return adjacency_matrices, parameters
+
+def list_all_hdf5(dirpath):
+    """Return the list of all the hdf5 files in the directory with path `dirpath`"""
+    files = [dirpath + f for f in os.listdir(dirpath)]
+    h5_files = []
+    for i in range(len(files)):
+        if files[i].endswith(".h5"):
+            h5_files.append(files[i])
+
+    def sort_key(name):
+        without_extension = name.split(".")[-2]
+        interaction = without_extension.split("_")
+        for string in interaction:
+            if string[0] == "N":
+                interaction = string
+                break
+        to_int = ""
+        for i in range(1, len(interaction)):
+            to_int += interaction[i]
+        return int(to_int)
+
+    return sorted(h5_files, key=sort_key)
 
 def generate_edge_list_from_matrices(global_expect_probability_matrix, link_matrix):
     """Generate the edge list of the network having the layer of expected probability and link matrix"""

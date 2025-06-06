@@ -15,25 +15,21 @@ GAME_TYPE_SIGNATURE = ["PD", "SH", "SD", "HG"]
 
 class RLNetwork:
 
-    def __init__(self, seed=None):
-        self.seed=seed
-        self.parameters = None
-        self.vertices = []
-        self.name = ""
+    def __init__(self, parameters_filename):
+        self.seed=None
         self.verbose = False
+        self.vertices = []
 
-    def init_with_parameters(self, parameters_filename):
-        """Initialize network with parameters contained in the yaml file `parameters_filename`"""
         # Get parameters
         self.parameters = parse_parameters(parameters_filename)
         if not self.parameters["Output directory"].endswith("/"):
             raise KeyError("The 'Output directory' parameter must end with a '/' as it is a directory")
         if "Verbose" in self.parameters:
             self.verbose = self.parameters["Verbose"]
+        if "Seed" in self.parameters:
+            self.seed = self.parameters["Seed"]
         # Create vertices
         self.create_all_vertices()
-        # Generate name
-        self.generate_name()
 
     def reset(self, new_seed=None):
         return self.__init__(new_seed)
@@ -56,7 +52,7 @@ class RLNetwork:
             v = RLVertex(i, possible_phenotypes[distrib_pointer-1], self.parameters["Memory size"])
             self.vertices.append(v)
 
-    def generate_name(self, preseed_prefix=""):
+    def generate_name(self, interaction):
         """Generate a name that represent the simulation. This name will be used for saving
         the simulation. The parameters `Seed` can avoid duplicate name.
         name format: '<Distribution>_S<Community size>_T<Trust threshold>_M<Memory size>_N<Number of interaction>(_<seed>)
@@ -78,14 +74,12 @@ class RLNetwork:
         name += "S" + str(self.parameters["Community size"]) + "_"
         name += "T" + str(self.parameters["Trust threshold"]) + "_"
         name += "M" + str(self.parameters["Memory size"]) + "_"
-        name += "N" + str(self.parameters["Number of interaction"])
+        name += "N" + str(interaction)
 
-        if preseed_prefix != "":
-            name += "_" + preseed_prefix
         if not self.seed is None:
             name += "_" + str(self.seed)
         
-        self.name = name
+        return name
 
     def simulate_interaction(self):
         """Simulate an interaction between two randomly taken agents of the network
@@ -141,37 +135,44 @@ class RLNetwork:
         if self.verbose:
             print_parameters(self.parameters)
         
-        for _ in tqdm(range(self.parameters["Number of interaction"])):
+        if self.parameters["Save mode"] == "Freq":
+            to_save_inter = np.linspace(0, self.parameters["Number of interaction"], self.parameters["Number of save"]+1)
+            to_save_inter = to_save_inter[1::]
+        
+        p = 0
+        for inter in tqdm(range(self.parameters["Number of interaction"])):
+            if self.parameters["Save mode"] == "Freq" and inter == to_save_inter[p]:
+                p+=1
+                self.save(inter)
             self.simulate_interaction()
         
         if self.parameters["Save mode"] == "Off":
             return
         elif self.parameters["Save mode"] == "Last":
+            print("Saving in file: ", self.parameters["Output directory"] + self.generate_name(inter+1) + ".h5")
             self.save()
+        elif self.parameters["Save mode"] == "Freq":
+            print("Saving in directory: ", self.parameters["Output directory"] + self.generate_name(inter+1) + "/")
+            self.save(inter+1)
         else:
             raise KeyError("Unknown save mode: must be in 'Last' or 'Off")
 
-    def save(self, verbose_context=True):
+    def save(self, interaction):
         """Saving the current important piece of information of the network in a HDF5 file"""
-        try:
-            os.makedirs(self.parameters["Output directory"])
-        except OSError:
-            if verbose_context:
-                print("/!\ Warning: the directory you want to save in already exists. You may overwrite file")
-                proceed = input("Proceed [y]/n ?")
-                if proceed == "n":
-                    return
-        
-        filepath = self.parameters["Output directory"] + self.name + ".h5"
-        if verbose_context:
-            print("Saving in: ", filepath)
+        name = self.generate_name(interaction)
+        if self.parameters["Save mode"] == "Last":
+            os.makedirs(self.parameters["Output directory"], exist_ok=True)
+            dir_name = ""
+        elif self.parameters["Save mode"] == "Freq":
+            dir_name = self.generate_name(self.parameters["Number of interaction"]) + "/"
+            os.makedirs(self.parameters["Output directory"] + dir_name, exist_ok=True)
+        filepath = self.parameters["Output directory"] + dir_name + name + ".h5"
         hdf5_file = h5py.File(filepath, "w")
 
         # Saving all adjacency matrices
         for g in GAME_TYPE_SIGNATURE:
             hdf5_file["p" + g] = self.get_probability_matrix(g)
             hdf5_file["pe" + g] = self.get_expect_probability_matrix(g)
-            hdf5_file["Correlation" + g] = self.get_correlation_adjacency_matrix(g)
         hdf5_file["peTotal"] = self.get_global_expect_probability_matrix()
         hdf5_file["link"] = self.get_link_adjacency_matrix()
 
@@ -179,7 +180,10 @@ class RLNetwork:
         pgroup = hdf5_file.create_group("Parameters", track_order=True)
         for key, value in self.parameters.items():
             if key != "Strategy distributions":
-                pgroup[key] = value
+                if key == "Number of interaction":
+                    pgroup[key] = interaction
+                else:
+                    pgroup[key] = value
         dgroup = pgroup.create_group("Strategy distributions")
         for ph, proba in self.parameters["Strategy distributions"].items():
             dgroup[ph] = proba
