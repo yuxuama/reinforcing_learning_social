@@ -49,7 +49,7 @@ class RLNetwork:
         for i in range(self.parameters["Community size"]):
             if i+1 > distribution_grid[distrib_pointer]:
                 distrib_pointer += 1
-            v = RLVertex(i, possible_phenotypes[distrib_pointer-1], self.parameters["Memory size"])
+            v = RLVertex(i, possible_phenotypes[distrib_pointer-1], self.parameters["Memory size"], self.parameters["Initial offset"])
             self.vertices.append(v)
 
     def generate_name(self, interaction):
@@ -322,11 +322,12 @@ def get_posterior_expected_probability(Nc, Ntot, phenotype):
 
 class RLVertex:
 
-    def __init__(self, index, phenotype, memory_size):
+    def __init__(self, index, phenotype, memory_size, initial_offset):
         """Initializing object properties"""
         self.index = index # Must be unique to this object (is used as hash key)
         self.phenotype = phenotype
         self.memory_size = memory_size
+        self.offset = initial_offset
 
         self.memory = []
         self.probabilities = {}
@@ -340,6 +341,11 @@ class RLVertex:
             for game_type, game_dict in INITIAL_PROBABILITIES[self.phenotype].items():
                 self.probabilities[other][game_type] = {}
                 for key, proba in game_dict.items():
+                    if key == "self":
+                        if proba == 0:
+                            proba = self.offset
+                        elif proba == 1:
+                            proba = 1 - self.offset
                     self.probabilities[other][game_type][key] = proba
         
         p = self.get_probability(other, game_type_signature)

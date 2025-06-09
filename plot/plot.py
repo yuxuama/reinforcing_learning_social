@@ -68,3 +68,52 @@ def plot_xhi_by_phenotype(xhi_means, **plot_kwargs):
             ax[selector].legend()
     fig.suptitle("Average xhi by phenotype")
     return ax
+
+def plot_cooperation_per_phenotype(response, phenotype, expected=False):
+    """Plot the probability of response per phenotype for each type of game played against
+    the phenotype `phenotype`"""
+
+    games = ["PD", "SH", "SD", "HG"]
+    possible_phenotype = sorted(list(response.keys()))
+
+    if expected:
+        data_selector = []
+        for i in range(4):
+            data_selector.append("pe" + games[i])
+    else:
+        data_selector = []
+        for i in range(4):
+            data_selector.append("p" + games[i])
+    
+    fig_layout = [(1, 2), (1, 3), (2, 3), (2, 3), (2, 3)]
+    layout = fig_layout[len(possible_phenotype) - 1]
+    fig, ax = plt.subplots(layout[0], layout[1], figsize=(8, 6))
+    for i in range(layout[0]):
+        for j in range(layout[1]):
+            if layout[0] == 1:
+                selector = j
+            else:
+                selector = (i, j)
+            index = i * layout[1] + j
+            if index == len(response):
+                ax[selector].remove()
+                break
+            key = possible_phenotype[index]
+            data = np.zeros(4)
+            for k in range(4):
+                data[k] = response[key][phenotype][data_selector[k]]
+            
+            ax[selector].bar(games, data, align='center', color="blue")
+            reverse = 1 - data
+            ax[selector].bar(games, reverse, align='center', bottom=data, color="red")
+            ax[selector].set_title(key)
+            ax[selector].set_ylim([0, 1])
+    
+    if expected:
+        title = "Expected probability versus {}".format(phenotype)
+    else:
+        title = "Probability versus {}".format(phenotype)
+    
+    fig.suptitle(title)
+    return ax
+

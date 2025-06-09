@@ -1,5 +1,5 @@
-Number of interaction: 10000000
-Output directory: "./out/"
+Number of interaction: 1000000
+Output directory: "./out/phbased/"
 # Define the way we want to save the simulation:
 # Among "Last" (Only final state), "Freq" (Require additional field "Number of save"), "Off" (No save)
 Save mode: "Freq"
@@ -11,6 +11,7 @@ Verbose: True # Default False
 Community size: 75
 Trust threshold: 0.6
 Memory size: 1000
+Initial offset: 0.05 # Initial offset of the phenotype based strategies
 
 # Valid phenotypes (with caps): Trustful, Random, Optimistic, Pessimist, Envious
 Strategy distributions:

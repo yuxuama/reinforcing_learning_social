@@ -120,3 +120,57 @@ def compute_eta_from_xhi(xhi):
     model = lambda j, eta: (np.exp(eta * j) - 1) / (np.exp(eta) - 1)
     popt, _ = curve_fit(model, t, xhi)
     return popt[0]
+
+def phenotype_discriminated_response(adj_matrices, phenotype_table):
+    """Return a dict of the average behavior of each phenotype to each other phenotype"""
+    # Initializing response structure
+    responses = {}
+    game_measure = ["pPD", "pePD", "pSH", "peSH", "pSD", "peSD", "pHG", "peHG"]
+    game_skeleton = {p:0 for p in game_measure}
+    possible_phenotype = {}
+    for i in range(len(phenotype_table)):
+        if not phenotype_table[i] in possible_phenotype:
+            possible_phenotype[phenotype_table[i]] = True
+            responses[phenotype_table[i]] = {}
+    for key in responses.keys():
+        for ph in possible_phenotype.keys():
+            responses[key][ph] = game_skeleton.copy()
+            responses[key][ph]["NumberPD"] = 0
+            responses[key][ph]["NumberSH"] = 0
+            responses[key][ph]["NumberSD"] = 0
+            responses[key][ph]["NumberHG"] = 0
+    
+    # Computing all values
+    for measure in game_measure:
+        matrix = adj_matrices[measure]
+        size = matrix.shape[0]
+        for i in range(size):
+            for j in range(size):
+                key = phenotype_table[i]
+                ph = phenotype_table[j]
+                responses[key][ph][measure] += matrix[i, j]
+                if measure.endswith("PD"):
+                    responses[key][ph]["NumberPD"] += 0.5
+                elif measure.endswith("SH"):
+                    responses[key][ph]["NumberSH"] += 0.5
+                elif measure.endswith("SD"):
+                    responses[key][ph]["NumberSD"] += 0.5
+                elif measure.endswith("HG"):
+                    responses[key][ph]["NumberHG"] += 0.5
+
+    
+    # Averaging
+    for key in responses.keys():
+        for ph in possible_phenotype.keys():
+            for measure in game_measure:
+                if measure.endswith("PD"):
+                    responses[key][ph][measure] /= responses[key][ph]["NumberPD"]
+                elif measure.endswith("SH"):
+                    responses[key][ph][measure] /= responses[key][ph]["NumberSH"]
+                elif measure.endswith("SD"):
+                    responses[key][ph][measure] /= responses[key][ph]["NumberSD"]
+                elif measure.endswith("HG"):
+                    responses[key][ph][measure] /= responses[key][ph]["NumberHG"]
+
+    
+    return responses
