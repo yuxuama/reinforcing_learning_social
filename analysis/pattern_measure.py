@@ -261,3 +261,17 @@ def compute_triadic_histogram(triadic_pattern_dtg, parameters):
         freq[key] = np.array(list(data_dtg.get_item(key).get_all_item().values()))
     triangle_name = list(data_dtg.get_item("Number").get_all_item().keys())
     return freq, triangle_name
+
+def measure_transitivity_from_hist(triadic_hist):
+    """Return the value of transitivity of the network from the histogram of frequences"""
+    number = triadic_hist["Number"]
+    transitive_index = [6, 10, 11, 12, 14, 15]
+    transitive = np.sum(number[transitive_index])
+    return transitive / np.sum(number)
+
+def measure_transitivity_from_dtg(triadic_pattern_dtg):
+    """Return the value of transitivity of the network from the DatasetGroup"""
+    dtgga = triadic_pattern_dtg.group_by("Transitive").aggregate("Number")
+    number_of_transitive = np.sum(list(dtgga.get_item(True).get_item("Number").get_all_item().values()))
+    number_of_non_transitive = np.sum(list(dtgga.get_item(False).get_item("Number").get_all_item().values()))
+    return number_of_transitive / (number_of_transitive + number_of_non_transitive)

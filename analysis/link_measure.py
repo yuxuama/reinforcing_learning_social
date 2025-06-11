@@ -127,18 +127,18 @@ def phenotype_discriminated_response(adj_matrices, phenotype_table):
     responses = {}
     game_measure = ["pPD", "pePD", "pSH", "peSH", "pSD", "peSD", "pHG", "peHG"]
     game_skeleton = {p:0 for p in game_measure}
-    possible_phenotype = {}
+    possible_field = {"Global": True}
     for i in range(len(phenotype_table)):
-        if not phenotype_table[i] in possible_phenotype:
-            possible_phenotype[phenotype_table[i]] = True
+        if not phenotype_table[i] in possible_field:
+            possible_field[phenotype_table[i]] = True
             responses[phenotype_table[i]] = {}
     for key in responses.keys():
-        for ph in possible_phenotype.keys():
-            responses[key][ph] = game_skeleton.copy()
-            responses[key][ph]["NumberPD"] = 0
-            responses[key][ph]["NumberSH"] = 0
-            responses[key][ph]["NumberSD"] = 0
-            responses[key][ph]["NumberHG"] = 0
+        for f in possible_field.keys():
+            responses[key][f] = game_skeleton.copy()
+            responses[key][f]["NumberPD"] = 0
+            responses[key][f]["NumberSH"] = 0
+            responses[key][f]["NumberSD"] = 0
+            responses[key][f]["NumberHG"] = 0
     
     # Computing all values
     for measure in game_measure:
@@ -149,28 +149,32 @@ def phenotype_discriminated_response(adj_matrices, phenotype_table):
                 key = phenotype_table[i]
                 ph = phenotype_table[j]
                 responses[key][ph][measure] += matrix[i, j]
+                responses[key]["Global"][measure] += matrix[i, j]
                 if measure.endswith("PD"):
                     responses[key][ph]["NumberPD"] += 0.5
+                    responses[key]["Global"]["NumberPD"] += 0.5
                 elif measure.endswith("SH"):
                     responses[key][ph]["NumberSH"] += 0.5
+                    responses[key]["Global"]["NumberSH"] += 0.5
                 elif measure.endswith("SD"):
                     responses[key][ph]["NumberSD"] += 0.5
+                    responses[key]["Global"]["NumberSD"] += 0.5
                 elif measure.endswith("HG"):
                     responses[key][ph]["NumberHG"] += 0.5
-
+                    responses[key]["Global"]["NumberHG"] += 0.5
     
     # Averaging
     for key in responses.keys():
-        for ph in possible_phenotype.keys():
+        for f in possible_field.keys():
             for measure in game_measure:
                 if measure.endswith("PD"):
-                    responses[key][ph][measure] /= responses[key][ph]["NumberPD"]
+                    responses[key][f][measure] /= responses[key][f]["NumberPD"]
                 elif measure.endswith("SH"):
-                    responses[key][ph][measure] /= responses[key][ph]["NumberSH"]
+                    responses[key][f][measure] /= responses[key][f]["NumberSH"]
                 elif measure.endswith("SD"):
-                    responses[key][ph][measure] /= responses[key][ph]["NumberSD"]
+                    responses[key][f][measure] /= responses[key][f]["NumberSD"]
                 elif measure.endswith("HG"):
-                    responses[key][ph][measure] /= responses[key][ph]["NumberHG"]
+                    responses[key][f][measure] /= responses[key][f]["NumberHG"]
 
     
     return responses

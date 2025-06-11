@@ -313,10 +313,10 @@ def get_posterior_expected_probability(Nc, Ntot, phenotype):
     A prior x * (1 - x) is roughly equivalent to N_mem = 3.
     N_mem represent how strongly one believe the other will behave randomly
     """
-    if phenotype == "Trustful" or phenotype == "Optimist":
-        return (Nc + 1) / (Ntot + 1)
-    elif phenotype == "Pessimist":
-        return Nc / (Ntot + 1)
+    #if phenotype == "Trustful" or phenotype == "Optimist":
+    #    return (Nc + 1) / (Ntot + 1)
+    #elif phenotype == "Pessimist":
+    #    return Nc / (Ntot + 1)
     
     return (Nc + 1) / (Ntot + 2)
 

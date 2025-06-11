@@ -24,7 +24,7 @@ def plot_histogram_per_phenotype(mean_histogram, bins, **hist_kwargs):
 
     fig_layout = [(1, 2), (1, 3), (2, 3), (2, 3), (2, 3)]
     layout = fig_layout[len(possible_field) - 2]
-    fig, ax = plt.subplots(layout[0], layout[1], figsize=(8, 6))
+    fig, ax = plt.subplots(layout[0], layout[1], figsize=(10, 6.5), constrained_layout=True)
     for i in range(layout[0]):
         for j in range(layout[1]):
             if layout[0] == 1:
@@ -37,7 +37,8 @@ def plot_histogram_per_phenotype(mean_histogram, bins, **hist_kwargs):
             ax[selector].set(
                 title=possible_field[index],
                 ylabel="Occurence",
-                xlabel="Expected probability"
+                xlabel="Expected probability",
+                box_aspect=1
             )
     fig.suptitle("Average histogram of 'trust' per phenotype")
     return ax
@@ -48,7 +49,7 @@ def plot_xhi_by_phenotype(xhi_means, **plot_kwargs):
     possible_phenotype.append(possible_phenotype.pop(0))
     fig_layout = [(1, 2), (1, 3), (2, 3), (2, 3), (2, 3)]
     layout = fig_layout[len(possible_phenotype) - 2]
-    fig, ax = plt.subplots(layout[0], layout[1], figsize=(8, 6))
+    fig, ax = plt.subplots(layout[0], layout[1], figsize=(10, 6.5), constrained_layout=True)
     model = lambda j, eta: (np.exp(eta * j) - 1) / (np.exp(eta) - 1)
     for i in range(layout[0]):
         for j in range(layout[1]):
@@ -66,6 +67,7 @@ def plot_xhi_by_phenotype(xhi_means, **plot_kwargs):
             ax[selector].plot(t_norm, model(t_norm, popt[0]), color="tab:orange", label="Fit ($\eta$ = {})".format(round(popt[0], 2)))
             ax[selector].set_title(ph)
             ax[selector].legend()
+            ax[selector].set_box_aspect(1)
     fig.suptitle("Average xhi by phenotype")
     return ax
 
@@ -85,9 +87,9 @@ def plot_cooperation_per_phenotype(response, phenotype, expected=False):
         for i in range(4):
             data_selector.append("p" + games[i])
     
-    fig_layout = [(1, 2), (1, 3), (2, 3), (2, 3), (2, 3)]
+    fig_layout = [(1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]
     layout = fig_layout[len(possible_phenotype) - 1]
-    fig, ax = plt.subplots(layout[0], layout[1], figsize=(8, 6))
+    fig, ax = plt.subplots(layout[0], layout[1], figsize=(11, 2.5), sharey=True)
     for i in range(layout[0]):
         for j in range(layout[1]):
             if layout[0] == 1:
@@ -95,19 +97,22 @@ def plot_cooperation_per_phenotype(response, phenotype, expected=False):
             else:
                 selector = (i, j)
             index = i * layout[1] + j
-            if index == len(response):
-                ax[selector].remove()
-                break
+            if index == 0:
+                label = "probability"
+                if expected:
+                    label = "expected " + label 
+                ax[selector].set_ylabel(label)
             key = possible_phenotype[index]
             data = np.zeros(4)
             for k in range(4):
                 data[k] = response[key][phenotype][data_selector[k]]
             
-            ax[selector].bar(games, data, align='center', color="blue")
+            ax[selector].bar(games, data, align='center', color="tab:blue")
             reverse = 1 - data
-            ax[selector].bar(games, reverse, align='center', bottom=data, color="red")
+            ax[selector].bar(games, reverse, align='center', bottom=data, color="tab:red")
             ax[selector].set_title(key)
             ax[selector].set_ylim([0, 1])
+            ax[selector].set_box_aspect(1)
     
     if expected:
         title = "Expected probability versus {}".format(phenotype)
