@@ -2,7 +2,7 @@
 Implement all measures on link structure based only on parameters and the link adjacency matrix"""
 
 from analysis.analysis_init import *
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, newton
 
 def individual_asymmetry(link_adjacency_matrix, median=False):
     n = link_adjacency_matrix.shape[0]
@@ -42,24 +42,29 @@ def global_asymmetry(link_adjacency_matrix):
 
 # histograms and êtas
 
-def trust_histogram(i, expect_proba_ajacency_matrix, trust_threshold, bin_number=10):
+def trust_histogram(i, expect_proba_ajacency_matrix, trust_threshold, bins=None, bin_number=100):
     """Compute the histogram for the vertex with index `i` with `bin_number` bins"""
     data = expect_proba_ajacency_matrix[i]
     selector = data > trust_threshold
     data = data[selector]
-    return np.histogram(data, bins=bin_number)
+    if np.sum(selector) == 0:
+        return np.zeros(bin_number), []
+    if bins is None:
+        bins = np.linspace(trust_threshold, np.max(data), bin_number+1)
+    return np.histogram(data, bins=bins)
 
-def mean_trust_histograms(expect_proba_ajacency_matrix, trust_threshold, phenotype_table, bin_number=10):
+def mean_trust_histograms(expect_proba_ajacency_matrix, trust_threshold, phenotype_table, bin_number=100):
     """Compute the average histogram for each phenotype and the global popupaltion"""
     histograms = {"Global": np.zeros(bin_number)}
     phenotype_numbers = {}
     size = expect_proba_ajacency_matrix.shape[0]
+    bins = np.linspace(trust_threshold, 1, bin_number+1)
     for i in range(size):
         ph = phenotype_table[i]
         if not ph in histograms:
             histograms[ph] = np.zeros(bin_number)
             phenotype_numbers[ph] = 0
-        hist, _ = trust_histogram(i, expect_proba_ajacency_matrix, trust_threshold, bin_number=bin_number)
+        hist, _ = trust_histogram(i, expect_proba_ajacency_matrix, trust_threshold, bins=bins, bin_number=bin_number)
         histograms[ph] += hist
         histograms["Global"] += hist
         phenotype_numbers[ph] += 1
@@ -83,12 +88,12 @@ def compute_xhi_from_histogram(histogram):
         xhi[i] += xhi[i-1]
     return xhi
 
-def compute_xhi_from_matrix(i, expect_proba_ajacency_matrix, trust_threshold, bin_number=10):
+def compute_xhi_from_matrix(i, expect_proba_ajacency_matrix, trust_threshold, bin_number=100):
     """Compute the function xhi. It has as many points as in the number of specified by `bin_number`"""
     hist, _ = trust_histogram(i , expect_proba_ajacency_matrix, trust_threshold, bin_number=bin_number)
     return compute_xhi_from_histogram(hist)
 
-def compute_mean_xhis(expect_proba_ajacency_matrix, trust_threshold, phenotype_table, bin_number=10):
+def compute_mean_xhis(expect_proba_ajacency_matrix, trust_threshold, phenotype_table, bin_number=100):
     """Compute the average xhis per phenotype and for global"""
     mean_xhis = {"Global": np.zeros(bin_number)}
     phenotype_numbers = {}
@@ -120,6 +125,23 @@ def compute_eta_from_xhi(xhi):
     model = lambda j, eta: (np.exp(eta * j) - 1) / (np.exp(eta) - 1)
     popt, _ = curve_fit(model, t, xhi)
     return popt[0]
+
+def compute_eta_from_L(i, expect_proba_ajacency_matrix, trust_threshold, bin_number=100):
+    """Compute the eta based on the bayesian estimator"""
+    data = expect_proba_ajacency_matrix[i]
+    selector = data > trust_threshold
+    data = data[selector]
+    hist, bins = np.histogram(data, bins=bin_number)
+    L = np.sum(hist)
+    L1 = np.sum(np.flip(hist) * np.arange(bin_number)) / (bin_number - 1)
+    if L <= 0 or L1/L >= 1 or L1/L < 0:
+        if L != 0 and L1/L >= 1 or L1/L < 0:
+            print("WARNING: rapport pas bon", L1/L)
+        return np.nan
+    func_prime = lambda eta: (1/(eta**2)) - (np.exp(eta)/(np.exp(eta) -1)**2)
+    func = lambda eta: (np.exp(eta) / (np.exp(eta) - 1)) - (1/eta) - L1/L
+    eta = newton(func, 0.5, func_prime)
+    return eta
 
 def phenotype_discriminated_response(adj_matrices, phenotype_table):
     """Return a dict of the average behavior of each phenotype to each other phenotype"""

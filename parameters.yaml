@@ -6,13 +6,13 @@ Save mode: "Freq"
 Number of save: 100
 Verbose: True # Default False
 # "Seed" of this simulation (identifier to avoid dublon)
-Seed: "init"
+Seed: "init_offset"
 
 # Model parameters
 Community size: 75
 Trust threshold: 0.6
-Memory size: 100
-Initial offset: 0 # Initial offset of the phenotype based strategies
+Memory size: 10000
+Initial offset: 0.15 # Initial offset of the phenotype based strategies
 
 # Valid phenotypes (with caps): Trustful, Random, Optimistic, Pessimist, Envious
 Strategy distributions:

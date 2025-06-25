@@ -4,7 +4,7 @@ Implement the dataset structure"""
 from analysis.analysis_init import *
 from networkx import from_numpy_array, betweenness_centrality
 from analysis.analysis_utils import get_phenotype_table_from_parameters
-from analysis.link_measure import individual_asymmetry, compute_xhi_from_matrix, compute_eta_from_xhi
+from analysis.link_measure import individual_asymmetry, compute_xhi_from_matrix, compute_eta_from_xhi, compute_eta_from_L
 
 class Dataset:
 
@@ -36,16 +36,23 @@ class Dataset:
             # Memory saturation
             i_data["Saturation"] = len(vertices[i].memory) / vertices[i].memory_size
             # average probabilities per game
+            i_data["pTotal"] = 0
             for g in games:
-                i_data["p" + g] = vertices[i].get_average_probability(g)
+                p = vertices[i].get_average_probability(g)
+                i_data["p" + g] = p
+                i_data["pTotal"] += p * 0.25
             # average expected probabilities per game
             for g in games:
                 i_data["pe" + g] = vertices[i].get_average_expect_probability(g)
             # Expected probability
             i_data["peTotal"] = vertices[i].get_average_global_expect_probability()
+            
             # Correlation
+            i_data["CorrelationTotal"] = 0
             for g in games:
-                i_data["Correlation" + g] = vertices[i].get_average_correlation(g)
+                corr = vertices[i].get_average_correlation(g)
+                i_data["Correlation" + g] = corr
+                i_data["CorrelationTotal"] += corr * 0.25
             # Outdegree
             i_data["Out degree"] = out_degrees[index]
             # Indegree
@@ -56,6 +63,8 @@ class Dataset:
                 i_data["Eta"] = compute_eta_from_xhi(xhi)
             else:
                 i_data["Eta"] = np.nan
+            # Theoretical eta
+            i_data["thEta"] = compute_eta_from_L(index, expect_proba_ajacency_matrix, net.parameters["Trust threshold"])
             # Centrality
             i_data["Centrality"] = centralities[index]
             # Asymmetry
@@ -81,16 +90,22 @@ class Dataset:
             # Phenotype
             i_data["Phenotype"] = phenotype_table[i]
             # average probabilities per game
+            i_data["pTotal"] = 0
             for g in games:
-                i_data["p" + g] = np.mean(adjacency_dict["p" + g][i])
+                p = np.mean(adjacency_dict["p" + g][i])
+                i_data["p" + g] = p
+                i_data["pTotal"] += p * 0.25
             # average expected probabilities per game
             for g in games:
                 i_data["pe" + g] = np.mean(adjacency_dict["pe" + g][i])
             # Expected probability
             i_data["peTotal"] = np.mean(adjacency_dict["peTotal"][i])
             # Average correlation
+            i_data["CorrelationTotal"] = 0
             for g in games:
-                i_data["Correlation" + g] = np.mean(adjacency_dict["p" + g][i] * adjacency_dict["pe" + g][i])
+                corr = np.mean(adjacency_dict["p" + g][i] * adjacency_dict["pe" + g][i])
+                i_data["Correlation" + g] = corr
+                i_data["CorrelationTotal"] += corr * 0.25
             # Outdegree
             i_data["Out degree"] = out_degrees[i]
             # Indegree
@@ -101,6 +116,8 @@ class Dataset:
                 i_data["Eta"] = compute_eta_from_xhi(xhi)
             else:
                 i_data["Eta"] = np.nan
+            # Theoretical eta
+            i_data["thEta"] = compute_eta_from_L(i, adjacency_dict["peTotal"], parameters["Trust threshold"])
             # Centrality
             i_data["Centrality"] = centralities[i]
             # Asymmetry

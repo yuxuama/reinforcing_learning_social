@@ -24,7 +24,7 @@ def plot_histogram_per_phenotype(mean_histogram, bins, **hist_kwargs):
 
     fig_layout = [(1, 2), (1, 3), (2, 3), (2, 3), (2, 3)]
     layout = fig_layout[len(possible_field) - 2]
-    fig, ax = plt.subplots(layout[0], layout[1], figsize=(10, 6.5), constrained_layout=True)
+    fig, ax = plt.subplots(layout[0], layout[1], figsize=(7, 7*2/3), constrained_layout=True)
     for i in range(layout[0]):
         for j in range(layout[1]):
             if layout[0] == 1:
@@ -49,7 +49,7 @@ def plot_xhi_by_phenotype(xhi_means, **plot_kwargs):
     possible_phenotype.append(possible_phenotype.pop(0))
     fig_layout = [(1, 2), (1, 3), (2, 3), (2, 3), (2, 3)]
     layout = fig_layout[len(possible_phenotype) - 2]
-    fig, ax = plt.subplots(layout[0], layout[1], figsize=(10, 6.5), constrained_layout=True)
+    fig, ax = plt.subplots(layout[0], layout[1], figsize=(7, 7*2/3), constrained_layout=True)
     model = lambda j, eta: (np.exp(eta * j) - 1) / (np.exp(eta) - 1)
     for i in range(layout[0]):
         for j in range(layout[1]):

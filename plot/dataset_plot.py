@@ -12,13 +12,13 @@ diadic_link_to_text = {
 }
 
 def plot_hist_by_phenotype(dataset, quantity, **plot_kwargs):
-    """Generate appropriate layour for phenotype ploting"""
+    """Generate appropriate layout for phenotype ploting"""
     dta = dataset.group_by("Phenotype").aggregate(quantity)
     global_dta = dataset.aggregate(quantity)
     possible_phenotype = sorted(list(dta.keys()))
     fig_layout = [(1, 2), (1, 3), (2, 3), (2, 3), (2, 3)]
     layout = fig_layout[dta.size - 1]
-    fig, ax = plt.subplots(layout[0], layout[1], figsize=(10, 6.5), constrained_layout=True)
+    fig, ax = plt.subplots(layout[0], layout[1], figsize=(7, 7*2/3), constrained_layout=True)
     for i in range(layout[0]):
         for j in range(layout[1]):
             if layout[0] == 1:
